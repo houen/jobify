@@ -65,11 +65,11 @@ Benchmarks from running on a 2020 i7 Macbook Pro:
 
 **Booting Rails:**
 
-Jobify adds ~ 0.06 ms avg overhead per call. So if you used `rolify :something` 100 times in your code, you would add ~ 6 milliseconds overhead to boot time.
+Jobify adds ~ 0.06 ms avg overhead per call. So if you used `jobify :something` 100 times in your code, you would add ~ 6 milliseconds overhead to boot time.
 
 **Running jobs**
 
-Rolify adds ~ 0.1 ms overhead to running a job. Performing via jobify takes ~ 0.23 ms versus ~ 0.13 ms for normal ActiveJob execution.
+Jobify adds ~ 0.1 ms overhead to running a job. Performing via jobify takes ~ 0.23 ms versus ~ 0.13 ms for normal ActiveJob execution.
 For all but the most massively-scheduled-all-the-time jobs, this should be fine.
 
 ```
