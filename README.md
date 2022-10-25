@@ -12,9 +12,9 @@ I believe this is largely because of 3 things:
 - The added complexity from moving code away from its natural and cohesive location in the project and into app/jobs
 - The extra work required to _maintain_ a tiny MyTinyJob class
 
-In summary, the activation energy to use background jobs is too high.
+In short, the activation energy to use background jobs is too high.
 
-Jobify lowers the activation energy to just `jobify :do_stuff` and calling `perform_do_stuff_later`:
+Jobify lowers the activation energy to just `jobify :do_stuff` to generate an activejob job class:, and calling `perform_do_stuff_later`
 
 ## Usage
 
@@ -66,6 +66,13 @@ Instance methods work out of the box if your class inherits from `ApplicationRec
 If your class does not inherit from these it must supply `#id` and `.find(id)` methods to use `jobify` on
 instance methods.
 
+### How it works
+Calling `jobify :my_method` will declare two things:
+- A new activejob job class as subclass of the class where it is called. This class `#perform` method will call the original method using `public_send`. 
+- A `perform_my_method_later` method, which will perform the job later. 
+  - `perform_my_method_later` will raise unless given the same arguments as `my_method`.
+
+#### Instance methods
 Jobifying instance methods work by adding a special id keyword argument to `JobifyInstanceMethod_xyz_Job#perform`:
 
 - When called, `#perform_xyz_later` gets the id of the instance via `instance#id`.
