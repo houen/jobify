@@ -3,6 +3,7 @@
 Run any method as a background job automatically. Works with both instance and class methods.
 
 ## Why?
+
 I think we as Rails developers are not using background processing as much as we could / should.
 
 I believe this is largely because of 3 things:
@@ -13,9 +14,10 @@ I believe this is largely because of 3 things:
 
 In summary, the activation energy to use background jobs is too high.
 
-This gem lowers the activation energy to just `jobify :do_stuff` and calling `perform_do_stuff_later`: 
+Jobify lowers the activation energy to just `jobify :do_stuff` and calling `perform_do_stuff_later`:
 
 ## Usage
+
 ```
 class SomeClass
   include Jobify
@@ -35,20 +37,25 @@ irb(main):011:0> ...stuff which would be handy to do async...
 ```
 
 ### Features
+
 - Jobifies class methods
 - Jobifies instance methods
-- Verifies correct arguments are given when enqueing a job 
-- Small overhead added: 0.06 ms boot and 0.1ms on perform 
-- Override perform_xyz_later method with whatever name you prefer (eg. `jobify :do_stuff, name: :do_stuff_async`) 
+- Verifies correct arguments are given when enqueing a job
+- Small overhead added: 0.06 ms boot and 0.1ms on perform
+- Override perform_xyz_later method with whatever name you prefer (eg. `jobify :do_stuff, name: :do_stuff_async`)
 
-### Notes on instance methods
-Instance methods are supported by adding a special keyword argument to `JobifySingletonMethod_xyz_Job#perform`. 
-The first thing `#perform_xyz_later` does is get the id of the instance via `#id`.
-This id is passed to `#perform_later` of the job as an extra argument. The perform method uses this to find the record, 
-and then run the instance method on the record.
+### Instance methods
 
-In short: If your model classes do not inherit from ApplicationRecord and do not supply `#id` and `.find(id)` methods, 
-you will need to add them to use `jobify` on instance methods.
+Instance methods work out of the box if your class inherits from `ApplicationRecord` or `ActiveRecord::Base`
+
+If your class does not inherit from these it must supply `#id` and `.find(id)` methods to use `jobify` on
+instance methods.
+
+Jobifying instance methods work by adding a special id keyword argument to `JobifyInstanceMethod_xyz_Job#perform`:
+
+- When called, `#perform_xyz_later` gets the id of the instance via `instance#id`.
+- The id is passed to the jobs `#perform` method as extra argument (`:__jobify__record_id`).
+- `#perform` method uses this to find the record and then run the instance method on the record.
 
 ## Installation
 
@@ -60,35 +67,40 @@ If bundler is not being used to manage dependencies, install the gem by executin
 
     $ gem install jobify
 
-### Benchmarks
+### Overhead
+
 Benchmarks from running on a 2020 i7 Macbook Pro:
 
-**Booting Rails:**
-
-Jobify adds ~ 0.06 ms avg overhead per call. So if you used `jobify :something` 100 times in your code, you would add ~ 6 milliseconds overhead to boot time.
-
-**Running jobs**
-
-Jobify adds ~ 0.1 ms overhead to running a job. Performing via jobify takes ~ 0.23 ms versus ~ 0.13 ms for normal ActiveJob execution.
-For all but the most massively-scheduled-all-the-time jobs, this should be fine.
-
+(Generate benchmarks by running `BENCHMARK=10_000 rake test` where env BENCHMARK is the number of iterations to run)
 ```
 Benchmark boot: 0.058 ms on avg of 100000 iterations
 Benchmark perform: 0.228 ms on avg of 100000 iterations
 Benchmark perform_control: 0.128 ms on avg of 100000 iterations
 ```
 
-Generate benchmarks by running `BENCHMARK=100_000 rake test` where env BENCHMARK is the number of iterations to run
+**Boot overhead:**
+
+Jobify adds ~ 0.06 ms avg overhead per call.
+So if you used `jobify :something` 100 times in your code, you would add ~ 6 ms overhead to boot time.
+
+**Run job overhead**
+
+Jobify adds ~ 0.1 ms overhead to running a job. Performing via jobify takes ~ 0.23 ms versus ~ 0.13 ms for normal
+ActiveJob execution.
+For all but the most massively-scheduled-all-the-time jobs, this should be fine.
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can
+also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the
+version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version,
+push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/jobify.
+Bug reports and pull requests are welcome on GitHub at https://github.com/houen/jobify.
 
 ## License
 
