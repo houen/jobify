@@ -15,6 +15,8 @@ class MissingKeywordArgument < ArgumentError; end
 module Jobify
   extend ActiveSupport::Concern
 
+  ID_ARG_NAME = :__jobify__record_id
+
   included do
     @jobified_methods = {
       instance: {},
@@ -84,7 +86,7 @@ module Jobify
 
     def self.instance__define_job_perform_method(job_class, caller_class, method_name)
       job_class.define_method(:perform) do |*args, **kw_args|
-        id = kw_args.delete(:__jobify__record_id)
+        id = kw_args.delete(ID_ARG_NAME)
         raise "Something has gone wrong. Record id is required" unless id
 
         record = caller_class.find(id)
@@ -100,7 +102,7 @@ module Jobify
         self.class.ensure_all_args_present!(req_args, args)
 
         # Instance method adds
-        kw_args[:__jobify__record_id] = id
+        kw_args[ID_ARG_NAME] = id
         job_class.perform_later(*args, **kw_args)
       end
     end
