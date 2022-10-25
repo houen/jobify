@@ -14,7 +14,7 @@ I believe this is largely because of 3 things:
 
 In short, the activation energy to use background jobs is too high.
 
-Jobify lowers the activation energy to just `jobify :do_stuff` to generate an activejob job class:, and calling `perform_do_stuff_later`
+Jobify lowers the activation energy to `jobify :do_stuff` to generate an activejob job class, and calling `perform_do_stuff_later`
 
 ## Usage
 

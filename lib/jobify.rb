@@ -4,8 +4,6 @@ require_relative "jobify/version"
 
 require "active_support"
 require "active_job"
-require "fileutils"
-require "active_support/core_ext/benchmark"
 
 class MissingArgument < ArgumentError; end
 
