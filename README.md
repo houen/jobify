@@ -13,13 +13,7 @@ I believe this is largely because of 3 things:
 
 In summary, the activation energy to use background jobs is too high.
 
-This gem lowers the activation energy to practically nothing: 
-
-```
-jobify :do_stuff
-```
-
-`do_stuff` is now jobified and can be queued with `perform_do_stuff_later(whatever_method_args)`
+This gem lowers the activation energy to just `jobify :do_stuff` and calling `perform_do_stuff_later`: 
 
 ## Usage
 ```
