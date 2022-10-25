@@ -23,17 +23,32 @@ class SomeClass
   include Jobify
   
   def self.do_stuff(arg1, kw_arg:) 
-    puts "...stuff which would be handy to do async..."
+    puts "...#{arg1} #{kw_arg}'s which would be handy to do async..."
   end
   jobify :do_stuff
 end
 
 SomeClass.perform_do_stuff_later(42, kw_arg: 'flum')
+```
 
-[ActiveJob] Enqueued SomeClass::JobifySingletonMethod_do_stuff_Job (Job ID: 46f95723-dfd6-4dbc-bbff-cb06baabf5b5) to Async(default) with arguments: 42, {:kw_arg=>"flum"}
-[ActiveJob] [SomeClass::JobifySingletonMethod_do_stuff_Job] [46f95723-dfd6-4dbc-bbff-cb06baabf5b5] Performing SomeClass::JobifySingletonMethod_do_stuff_Job (Job ID: 46f95723-dfd6-4dbc-bbff-cb06baabf5b5) from Async(default) enqueued at 2022-10-25T12:00:04Z with arguments: 42, {:kw_arg=>"flum"}
-irb(main):011:0> ...stuff which would be handy to do async...
-[ActiveJob] [SomeClass::JobifySingletonMethod_do_stuff_Job] [46f95723-dfd6-4dbc-bbff-cb06baabf5b5] Performed SomeClass::JobifySingletonMethod_do_stuff_Job (Job ID: 46f95723-dfd6-4dbc-bbff-cb06baabf5b5) from Async(default) in 22.16ms
+Output:
+
+```
+[ActiveJob] Enqueued SomeClass::JobifyClassMethod_do_stuff_Job (Job ID: 8fc2ca69-cb31-4f73-a908-e98acb8a2832) to Async(default) with arguments: 42, {:kw_arg=>"flum"}
+[ActiveJob] [SomeClass::JobifyClassMethod_do_stuff_Job] [8fc2ca69-cb31-4f73-a908-e98acb8a2832] Performing SomeClass::JobifyClassMethod_do_stuff_Job (Job ID: 8fc2ca69-cb31-4f73-a908-e98acb8a2832) from Async(default) enqueued at 2022-10-25T19:11:46Z with arguments: 42, {:kw_arg=>"flum"}
+=>
+#<SomeClass::JobifyClassMethod_do_stuff_Job:0x00007fee638d9cb8
+ @arguments=[42, {:kw_arg=>"flum"}],
+ @exception_executions={},
+ @executions=0,
+ @job_id="8fc2ca69-cb31-4f73-a908-e98acb8a2832",
+ @priority=nil,
+ @provider_job_id="8dc0614f-a229-4648-9308-4e6add9f666c",
+ @queue_name="default",
+ @successfully_enqueued=true,
+ @timezone=nil>
+...42 flum's which would be handy to do async...
+[ActiveJob] [SomeClass::JobifyClassMethod_do_stuff_Job] [8fc2ca69-cb31-4f73-a908-e98acb8a2832] Performed SomeClass::JobifyClassMethod_do_stuff_Job (Job ID: 8fc2ca69-cb31-4f73-a908-e98acb8a2832) from Async(default) in 4.57ms
 ```
 
 ### Features
