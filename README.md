@@ -1,6 +1,6 @@
 # Jobify
 
-Run any method as a background job automatically. Works with both instance and class methods.
+Run any method as a background job with `perform_my_method_later`. Works with both instance and class methods.
 
 ## Why?
 
