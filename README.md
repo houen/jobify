@@ -2,8 +2,8 @@
 
 Run any method as a background job automatically. Works with both instance and class methods.
 
-### Why?
-I think we developers are not using background processing as much as we should / could.
+## Why?
+I think we as Rails developers are not using background processing as much as we could / should.
 
 I believe this is largely because of 3 things:
 
@@ -13,9 +13,13 @@ I believe this is largely because of 3 things:
 
 In summary, the activation energy to use background jobs is too high.
 
-This gem lowers the activation energy to practically nothing: `jobify :do_stuff`. 
+This gem lowers the activation energy to practically nothing: 
 
-`do_stuff` is now jobified, and can be queued with `do_stuff_later(whatever_method_args)`
+```
+jobify :do_stuff
+```
+
+`do_stuff` is now jobified and can be queued with `perform_do_stuff_later(whatever_method_args)`
 
 ## Usage
 ```
@@ -36,11 +40,6 @@ irb(main):011:0> ...stuff which would be handy to do async...
 [ActiveJob] [SomeClass::JobifySingletonMethod_do_stuff_Job] [46f95723-dfd6-4dbc-bbff-cb06baabf5b5] Performed SomeClass::JobifySingletonMethod_do_stuff_Job (Job ID: 46f95723-dfd6-4dbc-bbff-cb06baabf5b5) from Async(default) in 22.16ms
 ```
 
-### ALTERNATIVE NAMES
-- perform_do_stuff
-- perform_do_stuff_later
-- do_stuff_later
-
 ### Features
 - Jobifies class methods
 - Jobifies instance methods
@@ -48,11 +47,14 @@ irb(main):011:0> ...stuff which would be handy to do async...
 - Small overhead added: 0.06 ms boot and 0.1ms on perform 
 - Override perform_xyz_later method with whatever name you prefer (eg. `jobify :do_stuff, name: :do_stuff_async`) 
 
-### Note on instance methods
-Instance methods are supported by adding a special keyword argument containing the result of `record.id` to the perform method. The perform method of a jobified instasnce method will as first thing call `MyClass.find(id)` to fetch the record.
-The instance method is then run on the record.
+### Notes on instance methods
+Instance methods are supported by adding a special keyword argument to `JobifySingletonMethod_xyz_Job#perform`. 
+The first thing `#perform_xyz_later` does is get the id of the instance via `#id`.
+This id is passed to `#perform_later` of the job as an extra argument. The perform method uses this to find the record, 
+and then run the instance method on the record.
 
-If you class does not supply `#id` and `.find(id)` methods, you will need to provide them to use with instance methods.
+In short: If your model classes do not inherit from ApplicationRecord and do not supply `#id` and `.find(id)` methods, 
+you will need to add them to use `jobify` on instance methods.
 
 ## Installation
 
