@@ -40,7 +40,7 @@ module Jobify
     end
 
     def self._define_job_class(method_name, job_method_name, params, singleton_method)
-      job_class_name = singleton_method ? "JobifySingletonMethod_#{method_name}_Job" : "JobifyInstanceMethod_#{method_name}_Job"
+      job_class_name = singleton_method ? "JobifyClassMethod_#{method_name}_Job" : "JobifyInstanceMethod_#{method_name}_Job"
       parent_class = defined?(ApplicationJob) ? ApplicationJob : ActiveJob::Base
       job_class    = Class.new(parent_class)
       caller_class = self
