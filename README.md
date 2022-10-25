@@ -61,7 +61,7 @@ If bundler is not being used to manage dependencies, install the gem by executin
     $ gem install jobify
 
 ### Benchmarks
-Benchmarks from running on a Macbook Pro:
+Benchmarks from running on a 2020 i7 Macbook Pro:
 
 **Booting Rails:**
 
