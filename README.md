@@ -1,33 +1,58 @@
 # Jobify
 
-Run any method as a background job automatically. Works with instance and singleton methods.
+Run any method as a background job automatically. Works with both instance and class methods.
 
-**Short example:**
-```
-# Class code
-jobify :method_name
+### Why?
+I think we developers are not using background processing as much as we should / could.
 
-# To run method as background (bg) job
-method_name_bg
-```
+I believe this is largely because of 3 things:
 
-**Longer example:**
+- The extra work required to create a new MyTinyJob class
+- The added complexity from moving code away from its natural and cohesive location in the project and into app/jobs
+- The extra work required to _maintain_ a tiny MyTinyJob class
+
+In summary, the activation energy to use background jobs is too high.
+
+This gem lowers the activation energy to practically nothing: `jobify :do_stuff`. 
+
+`do_stuff` is now jobified, and can be queued with `do_stuff_later(whatever_method_args)`
+
+## Usage
 ```
 class SomeClass
   include Jobify
   
-  def self.my_method(arg1, kw_arg:) 
+  def self.do_stuff(arg1, kw_arg:) 
     puts "...stuff which would be handy to do async..."
   end
-  jobify :my_method
+  jobify :do_stuff
 end
 
-SomeClass.my_method_bg(42, kw_arg: 'flum')
+SomeClass.perform_do_stuff_later(42, kw_arg: 'flum')
 
-[ActiveJob] [SomeClass::JobifySingletonMethod_my_method_Job] [1e55320f-482c-442a-b5d2-eff4102cfeda] Performing SomeClass::JobifySingletonMethod_my_method_Job (Job ID: 1e55320f-482c-442a-b5d2-eff4102cfeda) from Async(default) enqueued at 2022-10-24T07:51:43Z with arguments: 42, {:kw_arg=>"flum"}
+[ActiveJob] Enqueued SomeClass::JobifySingletonMethod_do_stuff_Job (Job ID: 46f95723-dfd6-4dbc-bbff-cb06baabf5b5) to Async(default) with arguments: 42, {:kw_arg=>"flum"}
+[ActiveJob] [SomeClass::JobifySingletonMethod_do_stuff_Job] [46f95723-dfd6-4dbc-bbff-cb06baabf5b5] Performing SomeClass::JobifySingletonMethod_do_stuff_Job (Job ID: 46f95723-dfd6-4dbc-bbff-cb06baabf5b5) from Async(default) enqueued at 2022-10-25T12:00:04Z with arguments: 42, {:kw_arg=>"flum"}
 irb(main):011:0> ...stuff which would be handy to do async...
-[ActiveJob] [SomeClass::JobifySingletonMethod_my_method_Job] [1e55320f-482c-442a-b5d2-eff4102cfeda] Performed SomeClass::JobifySingletonMethod_my_method_Job (Job ID: 1e55320f-482c-442a-b5d2-eff4102cfeda) from Async(default) in 24.96ms
+[ActiveJob] [SomeClass::JobifySingletonMethod_do_stuff_Job] [46f95723-dfd6-4dbc-bbff-cb06baabf5b5] Performed SomeClass::JobifySingletonMethod_do_stuff_Job (Job ID: 46f95723-dfd6-4dbc-bbff-cb06baabf5b5) from Async(default) in 22.16ms
 ```
+
+### ALTERNATIVE NAMES
+- perform_do_stuff
+- perform_do_stuff_later
+- do_stuff_later
+
+### Features
+- Jobifies class methods
+- Jobifies instance methods
+- Verifies correct arguments are given when enqueing a job 
+- Small overhead added: 0.06 ms boot and 0.1ms on perform 
+- Override perform_xyz_later method with whatever name you prefer (eg. `jobify :do_stuff, name: :do_stuff_async`) 
+
+### Note on instance methods
+Instance methods are supported by adding a special keyword argument containing the result of `record.id` to the perform method. The perform method of a jobified instasnce method will as first thing call `MyClass.find(id)` to fetch the record.
+The instance method is then run on the record.
+
+If you class does not supply `#id` and `.find(id)` methods, you will need to provide them to use with instance methods.
 
 ## Installation
 
@@ -38,10 +63,6 @@ Install the gem and add to the application's Gemfile by executing:
 If bundler is not being used to manage dependencies, install the gem by executing:
 
     $ gem install jobify
-
-## Usage
-
-TODO: Write usage instructions here
 
 ### Benchmarks
 Benchmarks from running on a Macbook Pro:
