@@ -93,7 +93,7 @@ class TestJobify < ActiveSupport::TestCase
   test "argument safety - require keyword arg c" do
     perform_enqueued_jobs do
       assert_raises(MissingKeywordArgument) do
-        TestBunny.kiss_bg :a, :b, d: 2
+        TestBunny.perform_kiss_later :a, :b, d: 2
       end
     end
   end
@@ -101,7 +101,7 @@ class TestJobify < ActiveSupport::TestCase
   test "argument safety - require keyword arg d" do
     perform_enqueued_jobs do
       assert_raises MissingKeywordArgument do
-        TestBunny.kiss_bg :a, :b, c: 1
+        TestBunny.perform_kiss_later :a, :b, c: 1
       end
     end
   end
@@ -109,42 +109,42 @@ class TestJobify < ActiveSupport::TestCase
   test "argument safety - require enough args submitted" do
     perform_enqueued_jobs do
       assert_raises MissingArgument do
-        TestBunny.kiss_bg :a, c: 1, d: 2
+        TestBunny.perform_kiss_later :a, c: 1, d: 2
       end
     end
   end
 
   test "singleton methods work w/ default kw args" do
     perform_enqueued_jobs do
-      TestBunny.kiss_bg :a, :b, c: 1, d: 2
+      TestBunny.perform_kiss_later :a, :b, c: 1, d: 2
     end
   end
 
   test "singleton methods work w/ kw args w/ overridden defaults" do
     perform_enqueued_jobs do
-      TestBunny.kiss_bg :a, :b, c: 1, d: 2, e: 4
+      TestBunny.perform_kiss_later :a, :b, c: 1, d: 2, e: 4
     end
   end
 
   test "instance methods work w/ default kw args" do
     perform_enqueued_jobs do
-      TestBunny.new.kiss2_bg :a, :b, c: 1, d: 2
+      TestBunny.new.perform_kiss2_later :a, :b, c: 1, d: 2
     end
   end
 
   test "instance methods work w/ kw args w/ overridden defaults" do
     perform_enqueued_jobs do
-      TestBunny.new.kiss2_bg :a, :b, c: 1, d: 2, e: 4
+      TestBunny.new.perform_kiss2_later :a, :b, c: 1, d: 2, e: 4
     end
   end
 
   test "result array has expected data" do
     perform_enqueued_jobs do
       TestBunny.reset_state
-      TestBunny.kiss_bg :a, :b, c: 1, d: 2
-      TestBunny.kiss_bg :a, :b, c: 1, d: 2, e: 4
-      TestBunny.new.kiss2_bg :a, :b, c: 1, d: 2
-      TestBunny.new.kiss2_bg :a, :b, c: 1, d: 2, e: 4
+      TestBunny.perform_kiss_later :a, :b, c: 1, d: 2
+      TestBunny.perform_kiss_later :a, :b, c: 1, d: 2, e: 4
+      TestBunny.new.perform_kiss2_later :a, :b, c: 1, d: 2
+      TestBunny.new.perform_kiss2_later :a, :b, c: 1, d: 2, e: 4
 
       assert_equal(
         ["Mmmmuah! [a, b, 1, 3]", "Mmmmuah! [a, b, 1, 4]", "Smooch! [a, b, 1, 3]", "Smooch! [a, b, 1, 4]"],
@@ -156,10 +156,10 @@ class TestJobify < ActiveSupport::TestCase
   test 'instance and class methods can have same name and be jobified' do
     perform_enqueued_jobs do
       TestBunny.reset_state
-      assert TestBunny.new.respond_to?(:kiss_bg)
+      assert TestBunny.new.respond_to?(:perform_kiss_later)
 
-      TestBunny.kiss_bg :a, :b, c: 1, d: 2, e: 4
-      TestBunny.new.kiss_bg :a, :b, c: 1, d: 2, e: 4
+      TestBunny.perform_kiss_later :a, :b, c: 1, d: 2, e: 4
+      TestBunny.new.perform_kiss_later :a, :b, c: 1, d: 2, e: 4
 
       assert_equal(
         ["Mmmmuah! [a, b, 1, 4]", "Smooch! [a, b, 1, 4]"],
@@ -180,8 +180,8 @@ class TestJobify < ActiveSupport::TestCase
         end
 
         (BENCHMARK / 2).times do
-          JobifyBenchmark.benchmark(:perform) { TestBunny.kiss_bg :a, :b, c: 1, d: 2, e: 4 }
-          JobifyBenchmark.benchmark(:perform) { TestBunny.new.kiss_bg :a, :b, c: 1, d: 2, e: 4 }
+          JobifyBenchmark.benchmark(:perform) { TestBunny.perform_kiss_later :a, :b, c: 1, d: 2, e: 4 }
+          JobifyBenchmark.benchmark(:perform) { TestBunny.new.perform_kiss_later :a, :b, c: 1, d: 2, e: 4 }
         end
 
         BENCHMARK.times do |i|

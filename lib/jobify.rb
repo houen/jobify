@@ -15,35 +15,31 @@ class MissingKeywordArgument < ArgumentError; end
 module Jobify
   extend ActiveSupport::Concern
 
-  JOBIFY_SUFFIX = '_bg'
-
   included do
     @jobified_methods = {
       instance:  {},
       singleton: {}
     }
 
-    def self.jobify(method_name)
+    def self.jobify(method_name, job_method_name: "perform_#{method_name}_later")
+    # def self.jobify(method_name, job_method_name: "#{method_name}_bg")
       raise 'method name cannot be blank' if method_name.blank?
       method_name = method_name.to_s
-
-      instance_method_key  = method_name
-      singleton_method_key = "self.#{method_name}"
 
       if method_defined?(method_name) && !@jobified_methods[:instance][method_name]
         # Instance method
         params = instance_method(method_name).parameters
-        _define_job_class(method_name, params, false)
+        _define_job_class(method_name, job_method_name, params, false)
         @jobified_methods[:instance][method_name] = true
       elsif respond_to?(method_name) && !@jobified_methods[:singleton][method_name]
         # Singleton method (Class method)
         params = method(method_name).parameters
-        _define_job_class(method_name, params, true)
+        _define_job_class(method_name, job_method_name, params, true)
         @jobified_methods[:singleton][method_name] = true
       end
     end
 
-    def self._define_job_class(method_name, params, singleton_method)
+    def self._define_job_class(method_name, job_method_name, params, singleton_method)
       if singleton_method
         job_class_name = "JobifySingletonMethod_#{method_name}_Job"
       else
@@ -57,10 +53,10 @@ module Jobify
       # Define perform method on job class
       if singleton_method
         singleton__define_job_perform_method(job_class, caller_class, method_name)
-        singleton__define_job_method(job_class, method_name, params)
+        singleton__define_job_enqueue_method(job_class, job_method_name, params)
       else
         instance__define_job_perform_method(job_class, caller_class, method_name)
-        instance__define_job_method(job_class, method_name, params)
+        instance__define_job_enqueue_method(job_class, job_method_name, params)
       end
     end
 
@@ -74,8 +70,8 @@ module Jobify
       end
     end
 
-    def self.singleton__define_job_method(job_class, method_name, params)
-      define_singleton_method("#{method_name}#{JOBIFY_SUFFIX}") do |*args, **kw_args|
+    def self.singleton__define_job_enqueue_method(job_class, job_method_name, params)
+      define_singleton_method(job_method_name) do |*args, **kw_args|
         req_args    = params.filter_map { _1[0] == :req ? _1[1] : nil }
         req_kw_args = params.filter_map { _1[0] == :keyreq ? _1[1] : nil }
 
@@ -100,8 +96,8 @@ module Jobify
       end
     end
 
-    def self.instance__define_job_method(job_class, method_name, params)
-      define_method("#{method_name}#{JOBIFY_SUFFIX}") do |*args, **kw_args|
+    def self.instance__define_job_enqueue_method(job_class, job_method_name, params)
+      define_method(job_method_name) do |*args, **kw_args|
         req_args    = params.filter_map { _1[0] == :req ? _1[1] : nil }
         req_kw_args = params.filter_map { _1[0] == :keyreq ? _1[1] : nil }
         self.class.ensure_required_kw_args_present!(req_kw_args, kw_args)
