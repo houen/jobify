@@ -1,5 +1,7 @@
 AllCops:
   TargetRubyVersion: 2.6
+  Exclude:
+    - 'test/*'
 
 Style/StringLiterals:
   Enabled: true
@@ -9,5 +11,14 @@ Style/StringLiteralsInInterpolation:
   Enabled: true
   EnforcedStyle: double_quotes
 
-Layout/LineLength:
+Metrics/BlockLength:
   Max: 120
+
+Metrics/AbcSize:
+  Enabled: false
+
+Metrics/MethodLength:
+  Enabled: false
+
+Layout/LineLength:
+  Max: 150

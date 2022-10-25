@@ -1,28 +1,29 @@
 # frozen_string_literal: true
 
 require_relative "jobify/version"
-require_relative "jobify/jobify_benchmark"
 
-require 'active_support'
-require 'active_job'
-require 'fileutils'
-require 'active_support/core_ext/benchmark'
+require "active_support"
+require "active_job"
+require "fileutils"
+require "active_support/core_ext/benchmark"
 
 class MissingArgument < ArgumentError; end
 
 class MissingKeywordArgument < ArgumentError; end
 
+# Include to allow running any method as a background job automatically
 module Jobify
   extend ActiveSupport::Concern
 
   included do
     @jobified_methods = {
-      instance:  {},
+      instance: {},
       singleton: {}
     }
 
     def self.jobify(method_name, job_method_name: "perform_#{method_name}_later")
-      raise 'method name cannot be blank' if method_name.blank?
+      raise "method name cannot be blank" if method_name.blank?
+
       method_name = method_name.to_s
 
       if method_defined?(method_name) && !@jobified_methods[:instance][method_name]
@@ -39,15 +40,11 @@ module Jobify
     end
 
     def self._define_job_class(method_name, job_method_name, params, singleton_method)
-      if singleton_method
-        job_class_name = "JobifySingletonMethod_#{method_name}_Job"
-      else
-        job_class_name = "JobifyInstanceMethod_#{method_name}_Job"
-      end
+      job_class_name = singleton_method ? "JobifySingletonMethod_#{method_name}_Job" : "JobifyInstanceMethod_#{method_name}_Job"
       parent_class = defined?(ApplicationJob) ? ApplicationJob : ActiveJob::Base
       job_class    = Class.new(parent_class)
       caller_class = self
-      self.const_set(job_class_name, job_class)
+      const_set(job_class_name, job_class)
 
       # Define perform method on job class
       if singleton_method
@@ -88,7 +85,7 @@ module Jobify
     def self.instance__define_job_perform_method(job_class, caller_class, method_name)
       job_class.define_method(:perform) do |*args, **kw_args|
         id = kw_args.delete(:__jobify__record_id)
-        raise 'Something has gone wrong. Record id is required' unless id
+        raise "Something has gone wrong. Record id is required" unless id
 
         record = caller_class.find(id)
         record.public_send(method_name, *args, **kw_args)
@@ -112,7 +109,7 @@ module Jobify
       req_kw_args.each do |key|
         next if kw_args.key?(key)
 
-        raise ::MissingKeywordArgument.new("Missing require keyword argument `#{key}`")
+        raise ::MissingKeywordArgument, "Missing require keyword argument `#{key}`"
       end
     end
 
@@ -120,7 +117,9 @@ module Jobify
       num_args_required = req_args.size
       num_args_given    = args.size
 
-      raise ::MissingArgument.new("Not enough arguments. Method expects #{num_args_required}. Got #{num_args_given}") unless num_args_given >= num_args_required
+      return if num_args_given >= num_args_required
+
+      raise ::MissingArgument, "Not enough arguments. Method expects #{num_args_required}. Got #{num_args_given}"
     end
 
     def ensure_required_kw_args_present!(req_kw_args, kw_args)
@@ -130,6 +129,5 @@ module Jobify
     def ensure_all_args_present!(req_args, args)
       self.class.ensure_all_args_present!(req_args, args)
     end
-
   end
 end

@@ -11,14 +11,12 @@ class BenchmarkControlJob < ApplicationJob
 end
 
 # Benchmark speed? Set false to skip
-BENCHMARK = ENV['BENCHMARK'].to_i.nonzero? ? ENV['BENCHMARK'].to_i : false
+BENCHMARK = ENV["BENCHMARK"].to_i.nonzero? ? ENV["BENCHMARK"].to_i : false
 # Output job logs?
-OUTPUT_JOB_LOGS = ENV['OUTPUT_JOB_LOGS'] == 'true'
+OUTPUT_JOB_LOGS = ENV["OUTPUT_JOB_LOGS"] == "true"
 
 # Silence ActiveJob unless we want to see it (output is good for debugging)
-unless OUTPUT_JOB_LOGS
-  ActiveJob::Base.logger = Logger.new(nil)
-end
+ActiveJob::Base.logger = Logger.new(nil) unless OUTPUT_JOB_LOGS
 
 # Test class for testing jobify
 class TestBunny
@@ -153,7 +151,7 @@ class TestJobify < ActiveSupport::TestCase
     end
   end
 
-  test 'instance and class methods can have same name and be jobified' do
+  test "instance and class methods can have same name and be jobified" do
     perform_enqueued_jobs do
       TestBunny.reset_state
       assert TestBunny.new.respond_to?(:perform_kiss_later)
@@ -169,7 +167,7 @@ class TestJobify < ActiveSupport::TestCase
   end
 
   if BENCHMARK
-    test 'benchmark' do
+    test "benchmark" do
       perform_enqueued_jobs do
         # Define and jobify a method BOOT_BENCHMARK_ITERATIONS times
         BENCHMARK.times do |i|
@@ -184,15 +182,14 @@ class TestJobify < ActiveSupport::TestCase
           JobifyBenchmark.benchmark(:perform) { TestBunny.new.perform_kiss_later :a, :b, c: 1, d: 2, e: 4 }
         end
 
-        BENCHMARK.times do |i|
+        BENCHMARK.times do |_i|
           JobifyBenchmark.benchmark(:perform_control) { BenchmarkControlJob.perform_later }
         end
 
-        puts ''
+        puts ""
         JobifyBenchmark.print
-        puts ''
+        puts ""
       end
     end
   end
-
 end
