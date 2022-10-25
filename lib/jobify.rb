@@ -22,7 +22,6 @@ module Jobify
     }
 
     def self.jobify(method_name, job_method_name: "perform_#{method_name}_later")
-    # def self.jobify(method_name, job_method_name: "#{method_name}_bg")
       raise 'method name cannot be blank' if method_name.blank?
       method_name = method_name.to_s
 
