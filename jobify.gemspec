@@ -8,8 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors = ["Søren Houen"]
   spec.email = ["s@houen.net"]
 
-  spec.summary = "Turn any method into a background job (`jobify :hello_world` generates `def hello_world_job`"
-  # spec.description = "Turns any method into a background job (`jobify :hello_world` generates `def hello_world_job`"
+  spec.summary = "Turn any method into a background job (`jobify :hello_world` generates `def perform_hello_world_later`"
   spec.homepage = "https://github.com/houen/jobify"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 2.6.0"

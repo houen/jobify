@@ -14,7 +14,7 @@ I believe this is largely because of 3 things:
 
 In short, the activation energy to use background jobs is too high.
 
-Jobify lowers the activation energy to `jobify :do_stuff` to generate an activejob job class, and calling `perform_do_stuff_later`
+Jobify lowers the activation energy to `jobify :my_method` to generate an activejob job class, and calling `perform_my_method_later`
 
 ## Usage
 
@@ -22,22 +22,22 @@ Jobify lowers the activation energy to `jobify :do_stuff` to generate an activej
 class SomeClass
   include Jobify
   
-  def self.do_stuff(arg1, kw_arg:) 
+  def self.my_method(arg1, kw_arg:) 
     puts "...#{arg1} #{kw_arg}'s which would be handy to do async..."
   end
-  jobify :do_stuff
+  jobify :my_method
 end
 
-SomeClass.perform_do_stuff_later(42, kw_arg: 'flum')
+SomeClass.perform_my_method_later(42, kw_arg: 'flum')
 ```
 
 Output:
 
 ```
-[ActiveJob] Enqueued SomeClass::JobifyClassMethod_do_stuff_Job (Job ID: 8fc2ca69-cb31-4f73-a908-e98acb8a2832) to Async(default) with arguments: 42, {:kw_arg=>"flum"}
-[ActiveJob] [SomeClass::JobifyClassMethod_do_stuff_Job] [8fc2ca69-cb31-4f73-a908-e98acb8a2832] Performing SomeClass::JobifyClassMethod_do_stuff_Job (Job ID: 8fc2ca69-cb31-4f73-a908-e98acb8a2832) from Async(default) enqueued at 2022-10-25T19:11:46Z with arguments: 42, {:kw_arg=>"flum"}
+[ActiveJob] Enqueued SomeClass::JobifyClassMethod_my_method_Job (Job ID: 8fc2ca69-cb31-4f73-a908-e98acb8a2832) to Async(default) with arguments: 42, {:kw_arg=>"flum"}
+[ActiveJob] [SomeClass::JobifyClassMethod_my_method_Job] [8fc2ca69-cb31-4f73-a908-e98acb8a2832] Performing SomeClass::JobifyClassMethod_my_method_Job (Job ID: 8fc2ca69-cb31-4f73-a908-e98acb8a2832) from Async(default) enqueued at 2022-10-25T19:11:46Z with arguments: 42, {:kw_arg=>"flum"}
 =>
-#<SomeClass::JobifyClassMethod_do_stuff_Job:0x00007fee638d9cb8
+#<SomeClass::JobifyClassMethod_my_method_Job:0x00007fee638d9cb8
  @arguments=[42, {:kw_arg=>"flum"}],
  @exception_executions={},
  @executions=0,
@@ -48,7 +48,7 @@ Output:
  @successfully_enqueued=true,
  @timezone=nil>
 ...42 flum's which would be handy to do async...
-[ActiveJob] [SomeClass::JobifyClassMethod_do_stuff_Job] [8fc2ca69-cb31-4f73-a908-e98acb8a2832] Performed SomeClass::JobifyClassMethod_do_stuff_Job (Job ID: 8fc2ca69-cb31-4f73-a908-e98acb8a2832) from Async(default) in 4.57ms
+[ActiveJob] [SomeClass::JobifyClassMethod_my_method_Job] [8fc2ca69-cb31-4f73-a908-e98acb8a2832] Performed SomeClass::JobifyClassMethod_my_method_Job (Job ID: 8fc2ca69-cb31-4f73-a908-e98acb8a2832) from Async(default) in 4.57ms
 ```
 
 ### Features
@@ -57,7 +57,7 @@ Output:
 - Jobifies instance methods
 - Verifies correct arguments are given when enqueing a job
 - Small overhead added: 0.06 ms boot and 0.1ms on perform
-- Override perform_xyz_later method with whatever name you prefer (eg. `jobify :do_stuff, name: :do_stuff_async`)
+- Override perform_xyz_later method with whatever name you prefer (eg. `jobify :my_method, name: :my_method_async`)
 
 ### Instance methods
 
