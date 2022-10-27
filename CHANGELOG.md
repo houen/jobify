@@ -8,3 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2022-10-25
 - Initial release
+
+## [0.2.0] - 2022-10-27
+- Add support for my_method?
+- Add support for my_method! 
+- Allow POROs with same-name class and instance methods to jobify class methods
