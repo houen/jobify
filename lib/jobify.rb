@@ -17,33 +17,43 @@ module Jobify
 
   included do
     @jobified_methods = {
-      instance: {},
+      instance:  {},
       singleton: {}
     }
 
-    def self.jobify(method_name, job_method_name: "perform_#{method_name}_later")
+    def self.jobify(method_name, job_method_name: nil)
       raise "method name cannot be blank" if method_name.blank?
 
-      method_name = method_name.to_s
+      method_name     = method_name.to_s
+      job_method_name = job_method_name(method_name, job_method_name)
 
-      if method_defined?(method_name) && !@jobified_methods[:instance][method_name]
+      if respond_to?(method_name) && !@jobified_methods[:singleton][method_name]
+        # Class methods are jobified first,
+        # so that class methods can be jobified by POROs with same-name instance methods
+        params = method(method_name).parameters
+        _define_job_class(method_name, job_method_name, params, singleton_method: true)
+        @jobified_methods[:singleton][method_name] = true
+      elsif method_defined?(method_name) && !@jobified_methods[:instance][method_name]
         # Instance method
         params = instance_method(method_name).parameters
-        _define_job_class(method_name, job_method_name, params, false)
+        _define_job_class(method_name, job_method_name, params, singleton_method: false)
         @jobified_methods[:instance][method_name] = true
-      elsif respond_to?(method_name) && !@jobified_methods[:singleton][method_name]
-        # Singleton method (Class method)
-        params = method(method_name).parameters
-        _define_job_class(method_name, job_method_name, params, true)
-        @jobified_methods[:singleton][method_name] = true
       end
     end
 
-    def self._define_job_class(method_name, job_method_name, params, singleton_method)
-      job_class_name = singleton_method ? "JobifyClassMethod_#{method_name}_Job" : "JobifyInstanceMethod_#{method_name}_Job"
-      parent_class = defined?(ApplicationJob) ? ApplicationJob : ActiveJob::Base
-      job_class    = Class.new(parent_class)
-      caller_class = self
+    def self.job_method_name(method_name, job_method_name)
+      return method_name unless job_method_name.nil?
+      return "perform_#{method_name[0..-2]}_later?" if method_name.end_with?('?')
+      return "perform_#{method_name[0..-2]}_later!" if method_name.end_with?('!')
+      "perform_#{method_name}_later"
+    end
+
+    def self._define_job_class(method_name, job_method_name, params, singleton_method:)
+      method_name_for_class_constant = method_name.gsub('?', '_question_').gsub('!', '_bang_')
+      job_class_name                 = singleton_method ? "JobifyClassMethod_#{method_name_for_class_constant}_Job" : "JobifyInstanceMethod_#{method_name_for_class_constant}_Job"
+      parent_class                   = defined?(ApplicationJob) ? ApplicationJob : ActiveJob::Base
+      job_class                      = Class.new(parent_class)
+      caller_class                   = self
       const_set(job_class_name, job_class)
 
       # Define perform method on job class

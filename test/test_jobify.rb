@@ -1,86 +1,10 @@
 # frozen_string_literal: true
 
 require "test_helper"
-
-class ApplicationJob < ActiveJob::Base; end
-
-class BenchmarkControlJob < ApplicationJob
-  def perform
-    TestBunny.benchmark_control
-  end
-end
-
-# Benchmark speed? Set false to skip
-BENCHMARK = ENV["BENCHMARK"].to_i.nonzero? ? ENV["BENCHMARK"].to_i : false
-# Output job logs?
-OUTPUT_JOB_LOGS = ENV["OUTPUT_JOB_LOGS"] == "true"
-
-# Silence ActiveJob unless we want to see it (output is good for debugging)
-ActiveJob::Base.logger = Logger.new(nil) unless OUTPUT_JOB_LOGS
-
-# Test class for testing jobify
-class TestBunny
-  include Jobify
-
-  @@state_for_testing = []
-
-  # Some singleton method
-  def self.kiss(a, b, c:, d:, e: 3)
-    @@state_for_testing << "Smooch! [#{a}, #{b}, #{c}, #{e}]"
-  end
-
-  # Some instance method
-  def kiss2(a, b, c:, d:, e: 3)
-    @@state_for_testing << "Mmmmuah! [#{a}, #{b}, #{c}, #{e}]"
-  end
-
-  # Some instance method with same name as singleton method
-  def kiss(a, b, c:, d:, e: 3)
-    @@state_for_testing << "Mmmmuah! [#{a}, #{b}, #{c}, #{e}]"
-  end
-
-  # Instance methods start by finding the record via id.
-  # This method enables that w/o ActiveRecord
-  def self.find(id)
-    raise "Test id should be 42. Was #{id}" unless id == 42
-
-    new
-  end
-
-  # Instance methods start by finding the record via id.
-  # This method enables that w/o ActiveRecord
-  def id
-    42
-  end
-
-  # Control method for benchmarking perform method invocation.
-  # Is called normally using BenchmarkControlJob.perform
-  def self.benchmark_control
-    "benchmark_control"
-  end
-
-  # Reset test state
-  def self.reset_state
-    @@state_for_testing = []
-  end
-
-  # Get test state
-  def self.state
-    @@state_for_testing
-  end
-
-  # Jobify instance method
-  jobify :kiss
-  # Jobify other instance method method
-  jobify :kiss2
-  # Jobify singleton method - 1st call jobifies instance, but 2nd call will jobify singleton method
-  jobify :kiss
-end
+require "test_bunny"
 
 class TestJobify < ActiveSupport::TestCase
   include ActiveJob::TestHelper
-
-  # TODO: MAke owrk w/ smae name for instance and singleton
 
   test "it has a version number" do
     perform_enqueued_jobs do
@@ -161,6 +85,40 @@ class TestJobify < ActiveSupport::TestCase
 
       assert_equal(
         ["Mmmmuah! [a, b, 1, 4]", "Smooch! [a, b, 1, 4]"],
+        TestBunny.state.sort
+      )
+    end
+  end
+
+  test "class methods are jobified first, so class methods can be jobified by POROs with same-name instance methods" do
+    perform_enqueued_jobs do
+      TestBunny.perform_class_methods_are_jobified_first_later
+
+      assert_raises do
+        TestBunny.new.perform_class_methods_are_jobified_first_later
+      end
+    end
+  end
+
+  test "methods ending with ? become perform_xyz_later?" do
+    perform_enqueued_jobs do
+      TestBunny.reset_state
+      TestBunny.perform_kiss_later?
+
+      assert_equal(
+        ["Kiss?"],
+        TestBunny.state.sort
+      )
+    end
+  end
+
+  test "methods can have ! in name" do
+    perform_enqueued_jobs do
+      TestBunny.reset_state
+      TestBunny.perform_kiss_later!
+
+      assert_equal(
+        ["Kiss!"],
         TestBunny.state.sort
       )
     end
