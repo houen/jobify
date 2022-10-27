@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    jobify (0.1.0)
+    jobify (0.1.1)
       activejob
       activesupport
 
