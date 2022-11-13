@@ -27,13 +27,13 @@ module Jobify
       method_name     = method_name.to_s
       job_method_name = job_method_name(method_name, job_method_name)
 
-      if respond_to?(method_name) && !@jobified_methods[:singleton][method_name]
+      if has_class_method?(method_name) && !@jobified_methods[:singleton][method_name]
         # Class methods are jobified first,
         # so that class methods can be jobified by POROs with same-name instance methods
         params = method(method_name).parameters
         _define_job_class(method_name, job_method_name, params, singleton_method: true)
         @jobified_methods[:singleton][method_name] = true
-      elsif method_defined?(method_name) && !@jobified_methods[:instance][method_name]
+      elsif has_instance_method?(method_name) && !@jobified_methods[:instance][method_name]
         # Instance method
         params = instance_method(method_name).parameters
         _define_job_class(method_name, job_method_name, params, singleton_method: false)
@@ -69,9 +69,9 @@ module Jobify
     def self.singleton__define_job_perform_method(job_class, caller_class, method_name)
       job_class.define_method(:perform) do |*args, **kw_args|
         if kw_args.empty?
-          caller_class.public_send(method_name, *args)
+          caller_class.send(method_name, *args)
         else
-          caller_class.public_send(method_name, *args, **kw_args)
+          caller_class.send(method_name, *args, **kw_args)
         end
       end
     end
@@ -98,7 +98,7 @@ module Jobify
         raise "Something has gone wrong. Record id is required" unless id
 
         record = caller_class.find(id)
-        record.public_send(method_name, *args, **kw_args)
+        record.send(method_name, *args, **kw_args)
       end
     end
 
@@ -139,5 +139,14 @@ module Jobify
     def ensure_all_args_present!(req_args, args)
       self.class.ensure_all_args_present!(req_args, args)
     end
+
+    def self.has_class_method?(method_name)
+      respond_to?(method_name, true)
+    end
+
+    def self.has_instance_method?(method_name)
+      method_defined?(method_name) || private_method_defined?(method_name)
+    end
+
   end
 end
